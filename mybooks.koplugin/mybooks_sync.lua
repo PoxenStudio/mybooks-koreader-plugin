@@ -12,6 +12,7 @@ local M = {}
 local MAX_SECONDS_BATCH = 200
 local SECONDS_FINALIZE_DELAY = 60
 local STATS_LOOKBACK = 300
+local ANNOTATION_PUSH_DELAY = 3
 
 local function tz_offset()
     local sign, hours, minutes = tostring(os.date("%z")):match("([+-])(%d%d)(%d%d)")
@@ -248,6 +249,7 @@ function M.on_suspend(api, ui)
 end
 
 function M.on_close_document(api, ui)
+    M.cancel_pending_annotations()
     local link = M.link_for_ui(ui)
     if not link then
         return
@@ -256,6 +258,42 @@ function M.on_close_document(api, ui)
     if State.setting("sync_annotations", true) then
         Annotations.exchange(api, ui, link, book_key(link))
     end
+end
+
+-- Local annotation changes (add/remove/edit highlight or note) are pushed after
+-- a short delay so that a burst of changes results in a single request.
+local annotation_push
+
+local function run_annotation_push()
+    local job = annotation_push
+    annotation_push = nil
+    if not job or not job.ui or not job.ui.annotation then
+        return
+    end
+    local link = M.link_for_ui(job.ui)
+    if not link then
+        return
+    end
+    Annotations.exchange(job.api, job.ui, link, book_key(link))
+end
+
+function M.cancel_pending_annotations()
+    if annotation_push then
+        UIManager:unschedule(run_annotation_push)
+        annotation_push = nil
+    end
+end
+
+function M.on_annotations_modified(api, ui)
+    if not State.setting("sync_annotations", true) or Annotations.is_applying() then
+        return
+    end
+    if not M.link_for_ui(ui) then
+        return
+    end
+    M.cancel_pending_annotations()
+    annotation_push = { api = api, ui = ui }
+    UIManager:scheduleIn(ANNOTATION_PUSH_DELAY, run_annotation_push)
 end
 
 function M.on_page_update(api, ui)

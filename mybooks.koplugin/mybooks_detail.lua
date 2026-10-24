@@ -102,6 +102,7 @@ function M.show(api, book)
                 kind = "row",
                 title = detail.title,
                 sub = detail.author,
+                sub_face = Metrics.meta_face(),
                 image = Thumbnails.get(detail) or Thumbnails.get(book),
                 h = Metrics.dp(164),
             },

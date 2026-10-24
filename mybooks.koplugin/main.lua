@@ -174,4 +174,11 @@ function MyBooks:onSuspend()
     require("mybooks_sync").on_suspend(State.api(), self.ui)
 end
 
+function MyBooks:onAnnotationsModified()
+    if not self:has_api() or not self:in_reader() then
+        return
+    end
+    require("mybooks_sync").on_annotations_modified(State.api(), self.ui)
+end
+
 return MyBooks

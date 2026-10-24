@@ -1,6 +1,23 @@
 # MyBooks Koreader 插件
 
-MyBooks 的 KOReader 客户端插件，用于在电子书阅读器上浏览书架、同步阅读进度和标注。
+[MyBooks](https://mybooks.top/) 的 KOReader 客户端插件，用于在电子书阅读器上浏览书架、同步阅读进度和标注。
+
+# 功能
+
+- 主页
+<p align="center">
+  <img src="docs/main_ui.jpg" alt="Main UI" />
+</p>
+
+- 详情
+<p align="center">
+  <img src="docs/detail.jpg" alt="Detail UI" />
+</p>
+
+- 阅读数据同步
+<p align="center">
+  <img src="docs/annotations.jpg" alt="Annotations UI" />
+</p>
 
 ## 构建
 

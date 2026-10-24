@@ -7,6 +7,10 @@ local State = require("mybooks_state")
 
 local M = {}
 
+-- True while server notes are being applied locally, so that the resulting
+-- AnnotationsModified events do not trigger another push back to the server.
+local applying = false
+
 local STYLE_TO_DRAWER = {
     highlight = "lighten",
     underline = "underscore",
@@ -165,6 +169,10 @@ function M.find_local(ui, note, key)
     return nil
 end
 
+function M.is_applying()
+    return applying
+end
+
 function M.apply_server(ui, book_key, notes)
     if not ui or not ui.annotation or not notes then
         return 0
@@ -258,7 +266,13 @@ function M.exchange(api, ui, link, book_key)
         logger.warn("MyBooks: annotations exchange failed", err)
         return nil, err
     end
-    M.apply_server(ui, book_key, rsp.notes)
+    applying = true
+    local ok, applied = pcall(M.apply_server, ui, book_key, rsp.notes)
+    applying = false
+    if not ok then
+        logger.warn("MyBooks: apply server annotations failed", tostring(applied))
+        return nil, "apply"
+    end
     local known = State.annotation_known(book_key)
     for key, id in pairs(current or {}) do
         known[key] = id
